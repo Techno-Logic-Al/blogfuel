@@ -143,7 +143,6 @@ npm run dev
 
 ### Go-live checklist
 
-- [ ] Wait for DNS to resolve for the live site domain.
 - [ ] Point the subdomain document root at the app's `public/` directory.
 - [ ] Set `APP_URL` to the full live site URL.
 - [ ] Set `APP_ENV=production`.
