@@ -98,7 +98,7 @@
                 @yield('content')
             </main>
 
-            <footer class="site-footer" data-reveal>
+            <footer class="site-footer">
                 <a class="footer-brand" href="{{ route('posts.index') }}">
                     <img class="footer-brand-image" src="{{ asset('images/BlogFuel text only transparent.png') }}" alt="BlogFuel">
                 </a>

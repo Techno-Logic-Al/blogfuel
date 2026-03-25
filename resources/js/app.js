@@ -42,7 +42,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }, {
-            threshold: 0.16,
+            rootMargin: '0px 0px 120px 0px',
+            threshold: 0.05,
         });
 
         revealItems.forEach((item, index) => {

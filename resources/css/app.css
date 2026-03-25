@@ -34,11 +34,13 @@
 
 html {
     scroll-behavior: smooth;
+    touch-action: pan-y pinch-zoom;
 }
 
 body {
     margin: 0;
     min-height: 100vh;
+    min-height: 100dvh;
     color: var(--color-text-primary);
     background:
         radial-gradient(circle at 12% 0%, rgba(255, 143, 0, 0.12), transparent 24%),
@@ -67,6 +69,11 @@ textarea {
 
 button {
     cursor: pointer;
+    touch-action: manipulation;
+}
+
+a {
+    touch-action: manipulation;
 }
 
 h1,
@@ -2110,6 +2117,7 @@ html.js-ready [data-reveal].is-visible {
     .page-frame {
         width: min(calc(100% - 20px), var(--max-width));
         margin: 14px auto;
+        padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
     }
 
     .site-header,
@@ -2128,12 +2136,16 @@ html.js-ready [data-reveal].is-visible {
         padding: 18px;
     }
 
-    .site-header,
     .section-heading,
     .panel-header,
     .form-actions {
         flex-direction: column;
         align-items: flex-start;
+    }
+
+    .site-header {
+        flex-direction: column;
+        align-items: stretch;
     }
 
     .header-actions {
@@ -2170,6 +2182,14 @@ html.js-ready [data-reveal].is-visible {
         grid-template-columns: 1fr;
         width: 100%;
         gap: 14px;
+        justify-items: center;
+        text-align: center;
+    }
+
+    .brand {
+        width: 100%;
+        justify-content: center;
+        justify-self: center;
     }
 
     .site-tagline {
@@ -2178,12 +2198,14 @@ html.js-ready [data-reveal].is-visible {
 
     .site-tagline-image {
         width: min(100%, 460px);
+        margin-inline: auto;
     }
 
     .site-footer {
         grid-template-columns: 1fr;
         justify-items: center;
         text-align: center;
+        margin-bottom: calc(110px + env(safe-area-inset-bottom, 0px));
     }
 
     .studio-form {
