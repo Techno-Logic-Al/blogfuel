@@ -57,28 +57,34 @@
                 </div>
 
                 @auth
-                    <div class="header-actions">
-                        <span class="user-pill">Signed in as <strong>{{ auth()->user()->name }}</strong></span>
-                        @if (auth()->user()->hasVerifiedEmail())
-                            @if (auth()->user()->hasUnlimitedGenerationAccess())
-                                <span class="status-pill">Unlimited free posts</span>
-                            @elseif (auth()->user()->hasActiveSubscription() && auth()->user()->canOpenBillingPortal())
-                                <form method="POST" action="{{ route('billing.portal') }}">
-                                    @csrf
-                                    <button class="button button-secondary" type="submit">Manage billing</button>
-                                </form>
-                            @elseif (auth()->user()->shouldConsumeCreditForNextGeneration())
-                                <span class="status-pill">{{ auth()->user()->creditBalance() }} paid posts left</span>
-                            @elseif (auth()->user()->hasReachedGenerationLimit())
-                                <a class="button button-primary" href="{{ route('posts.index') }}#plans">Choose plan</a>
-                            @else
-                                <span class="status-pill">{{ auth()->user()->freeGenerationsRemaining() }} free posts left</span>
+                    <div class="header-actions header-actions-auth">
+                        <div class="header-account-top">
+                            <span class="user-pill">Signed in as <strong>{{ auth()->user()->name }}</strong></span>
+                            @if (auth()->user()->hasVerifiedEmail())
+                                @if (auth()->user()->hasUnlimitedGenerationAccess())
+                                    <span class="status-pill">Unlimited free posts</span>
+                                @elseif (auth()->user()->hasActiveSubscription() && auth()->user()->canOpenBillingPortal())
+                                    <form method="POST" action="{{ route('billing.portal') }}">
+                                        @csrf
+                                        <button class="button button-secondary" type="submit">Manage billing</button>
+                                    </form>
+                                @elseif (auth()->user()->shouldConsumeCreditForNextGeneration())
+                                    <span class="status-pill">{{ auth()->user()->creditBalance() }} paid posts left</span>
+                                @elseif (auth()->user()->hasReachedGenerationLimit())
+                                    <a class="button button-primary" href="{{ route('posts.index') }}#plans">Choose plan</a>
+                                @else
+                                    <span class="status-pill">{{ auth()->user()->freeGenerationsRemaining() }} free posts left</span>
+                                @endif
                             @endif
-                        @endif
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button class="button header-logout-button" type="submit">Logout</button>
-                        </form>
+                        </div>
+
+                        <div class="header-account-bottom">
+                            <a class="button button-secondary header-change-password-button" href="{{ route('password.change') }}">Change password</a>
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button class="button header-logout-button" type="submit">Logout</button>
+                            </form>
+                        </div>
                     </div>
                 @else
                     <div class="header-actions header-actions-guest">

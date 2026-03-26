@@ -334,10 +334,6 @@
                     <p>Register or sign in to publish articles, keep your draft history, and unlock the remaining free generations on an account.</p>
                 </div>
             @endif
-
-            @if (app()->isLocal())
-                <p class="auth-hint">Local demo login: username <strong>admin</strong> and password <strong>password</strong>.</p>
-            @endif
         @endauth
     </section>
 

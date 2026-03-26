@@ -80,6 +80,8 @@
                     </div>
                 </label>
 
+                <a class="text-link" href="{{ route('password.request') }}">Forgot your password?</a>
+
                 <div class="form-actions">
                     <p>Sign in to start generating articles from the homepage.</p>
                     <button class="button button-primary" type="submit">Login</button>
@@ -89,10 +91,6 @@
                     @include('partials.recaptcha-fields')
                 @endif
             </form>
-
-            @if (app()->isLocal())
-                <p class="auth-hint">Local demo login: username <strong>admin</strong> and password <strong>password</strong>.</p>
-            @endif
         </div>
     </section>
 @endsection

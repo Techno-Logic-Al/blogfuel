@@ -3,10 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Illuminate\Auth\Notifications\ResetPassword as ResetPasswordNotification;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
@@ -23,7 +26,20 @@ class AuthTest extends TestCase
             ->assertOk()
             ->assertSee('Login')
             ->assertSee('Username')
+            ->assertSee('Forgot your password?')
             ->assertSee('data-password-toggle="login_password"', false);
+    }
+
+    /**
+     * Guests should be able to open the password reset request page.
+     */
+    public function test_forgot_password_page_loads(): void
+    {
+        $this->get(route('password.request'))
+            ->assertOk()
+            ->assertSee('Forgot your password?')
+            ->assertSee('Email address')
+            ->assertSee('Send reset email');
     }
 
     /**
@@ -60,6 +76,128 @@ class AuthTest extends TestCase
                 && $mailMessage->actionText === 'Verify email address'
                 && in_array('Confirm your email address to unlock article generation, publishing, and sharing in BlogFuel.', $mailMessage->introLines, true);
         });
+    }
+
+    /**
+     * Guests should be able to request a password reset email.
+     */
+    public function test_guest_can_request_password_reset_email(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create([
+            'name' => 'reset-user',
+            'email' => 'reset-user@example.com',
+        ]);
+
+        $response = $this->from(route('password.request'))->post(route('password.email'), [
+            'email' => 'reset-user@example.com',
+        ]);
+
+        $response->assertRedirect(route('password.request'));
+        $response->assertSessionHas('status', 'A password reset link has been sent to your email address.');
+
+        Notification::assertSentTo($user, ResetPasswordNotification::class, function (ResetPasswordNotification $notification, array $channels) use ($user): bool {
+            $mailMessage = $notification->toMail($user);
+
+            return in_array('mail', $channels, true)
+                && $mailMessage->subject === 'Reset your BlogFuel password'
+                && $mailMessage->actionText === 'Reset password';
+        });
+    }
+
+    /**
+     * Password reset requests should require a reCAPTCHA token when Enterprise protection is enabled.
+     */
+    public function test_password_reset_request_requires_recaptcha_when_enabled(): void
+    {
+        $this->enableRecaptcha();
+        Notification::fake();
+
+        User::factory()->create([
+            'name' => 'reset-captcha-user',
+            'email' => 'reset-captcha@example.com',
+        ]);
+
+        $response = $this->from(route('password.request'))->post(route('password.email'), [
+            'email' => 'reset-captcha@example.com',
+        ]);
+
+        $response->assertRedirect(route('password.request'));
+        $response->assertSessionHasErrors([
+            'recaptcha' => 'Complete the security check and try again.',
+        ]);
+        Notification::assertNothingSent();
+    }
+
+    /**
+     * A broken mail transport should not crash the password reset email flow.
+     */
+    public function test_password_reset_email_failure_is_handled_gracefully(): void
+    {
+        Config::set('mail.default', 'smtp');
+        Config::set('mail.mailers.smtp.scheme', 'tls');
+
+        User::factory()->create([
+            'name' => 'reset-broken',
+            'email' => 'reset-broken@example.com',
+        ]);
+
+        $response = $this->from(route('password.request'))->post(route('password.email'), [
+            'email' => 'reset-broken@example.com',
+        ]);
+
+        $response->assertRedirect(route('password.request'));
+        $response->assertSessionHasErrors([
+            'email' => 'Password reset email could not be sent right now. Check the mail settings and try again.',
+        ]);
+    }
+
+    /**
+     * Guests should be able to open the password reset form from a valid link.
+     */
+    public function test_reset_password_page_loads_from_valid_link(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'reset-form-user',
+            'email' => 'reset-form@example.com',
+        ]);
+
+        $token = Password::broker()->createToken($user);
+
+        $this->get(route('password.reset', [
+            'token' => $token,
+            'email' => 'reset-form@example.com',
+        ]))
+            ->assertOk()
+            ->assertSee('Reset password')
+            ->assertSee('data-password-toggle="reset_password"', false)
+            ->assertSee('data-password-toggle="reset_password_confirmation"', false);
+    }
+
+    /**
+     * Guests should be able to reset a password using a valid token.
+     */
+    public function test_guest_can_reset_password_with_valid_token(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'password-reset-user',
+            'email' => 'password-reset@example.com',
+            'password' => 'Old#1234',
+        ]);
+
+        $token = Password::broker()->createToken($user);
+
+        $response = $this->post(route('password.store'), [
+            'token' => $token,
+            'email' => 'password-reset@example.com',
+            'password' => 'New#1234',
+            'password_confirmation' => 'New#1234',
+        ]);
+
+        $response->assertRedirect(route('login'));
+        $response->assertSessionHas('status', 'Your password has been reset. You can now sign in with the new password.');
+        $this->assertTrue(Hash::check('New#1234', $user->fresh()->password));
     }
 
     /**
@@ -109,6 +247,75 @@ class AuthTest extends TestCase
         $response->assertRedirect(route('register'));
         $response->assertSessionHasErrors('password');
         $this->assertGuest();
+    }
+
+    /**
+     * Authenticated users should be able to open the change-password page.
+     */
+    public function test_authenticated_user_can_view_change_password_page(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'change-password-user',
+            'email' => 'change-password@example.com',
+            'password' => 'Old#1234',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('password.change'))
+            ->assertOk()
+            ->assertSee('Change password')
+            ->assertSee('Current password')
+            ->assertSee('data-password-toggle="current_password"', false)
+            ->assertSee('data-password-toggle="change_password"', false)
+            ->assertSee('data-password-toggle="change_password_confirmation"', false);
+    }
+
+    /**
+     * Authenticated users should be able to change their password.
+     */
+    public function test_authenticated_user_can_change_password(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'change-password-submit-user',
+            'email' => 'change-password-submit@example.com',
+            'password' => 'Old#1234',
+        ]);
+
+        $response = $this->actingAs($user)
+            ->from(route('password.change'))
+            ->put(route('password.update'), [
+                'current_password' => 'Old#1234',
+                'password' => 'New#1234',
+                'password_confirmation' => 'New#1234',
+            ]);
+
+        $response->assertRedirect(route('password.change'));
+        $response->assertSessionHas('status', 'Your password has been updated.');
+        $this->assertTrue(Hash::check('New#1234', $user->fresh()->password));
+    }
+
+    /**
+     * Users should not be able to change password without the current password.
+     */
+    public function test_authenticated_user_cannot_change_password_with_wrong_current_password(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'change-password-wrong-current',
+            'email' => 'change-password-wrong-current@example.com',
+            'password' => 'Old#1234',
+        ]);
+
+        $response = $this->actingAs($user)
+            ->from(route('password.change'))
+            ->put(route('password.update'), [
+                'current_password' => 'Wrong#1234',
+                'password' => 'New#1234',
+                'password_confirmation' => 'New#1234',
+            ]);
+
+        $response->assertRedirect(route('password.change'));
+        $response->assertSessionHasErrors('current_password');
+        $this->assertTrue(Hash::check('Old#1234', $user->fresh()->password));
     }
 
     /**

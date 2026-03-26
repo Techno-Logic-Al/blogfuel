@@ -24,12 +24,18 @@ Route::post('/stripe/webhook', [BillingController::class, 'webhook'])->name('bil
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
+    Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.request');
+    Route::post('/forgot-password', [AuthController::class, 'sendPasswordResetLink'])->name('password.email');
+    Route::get('/reset-password/{token}', [AuthController::class, 'showResetPassword'])->name('password.reset');
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.store');
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::get('/register/check-username', [AuthController::class, 'checkUsername'])->name('register.username.check');
     Route::post('/register', [AuthController::class, 'register'])->name('register.store');
 });
 
 Route::middleware('auth')->group(function (): void {
+    Route::get('/account/password', [AuthController::class, 'showChangePassword'])->name('password.change');
+    Route::put('/account/password', [AuthController::class, 'updatePassword'])->name('password.update');
     Route::get('/email/verify', [AuthController::class, 'showVerifyNotice'])->name('verification.notice');
     Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
         ->middleware(['signed', 'throttle:6,1'])
