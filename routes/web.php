@@ -2,9 +2,13 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BillingController;
+use App\Http\Controllers\DeploymentController;
 use App\Http\Controllers\PostController;
 use App\Http\Middleware\EnsureGenerationAccess;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/__deploy/setup', [DeploymentController::class, 'show'])->name('deployment.setup');
+Route::post('/__deploy/setup', [DeploymentController::class, 'run'])->name('deployment.run');
 
 Route::get('/', [PostController::class, 'index'])->name('posts.index');
 Route::redirect('/studio', '/');

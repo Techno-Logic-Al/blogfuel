@@ -87,6 +87,8 @@ Laravel app for generating and publishing AI-written articles from a single-page
      BLOGFUEL_ADMIN_PASSWORD=change-me-admin-password
      ```
 
+   - The default BlogFuel stack does not require Redis, Memcached, or AWS. It runs with local disk storage, file-based sessions and cache, and a synchronous queue unless you intentionally switch those services on.
+
    - The project defaults to SQLite and `gpt-5-mini`. Free and credit-pack access can use `gpt-5-mini` and `gpt-5.2`, while `gpt-5.4` unlocks on Pro subscription plans.
 
 4. Run the database migration:
@@ -139,7 +141,9 @@ npm run dev
 - Configure a real SMTP provider in the `MAIL_*` variables so email verification can send live messages.
 - Keep `STRIPE_SECRET` and `STRIPE_WEBHOOK_SECRET` on the server only.
 - Set production-safe `BLOGFUEL_ADMIN_EMAIL` and `BLOGFUEL_ADMIN_PASSWORD` values before seeding the admin user on the live site.
+- Redis, Memcached, and AWS are optional for this project. The default deployment uses `FILESYSTEM_DISK=local`, `SESSION_DRIVER=file`, `CACHE_STORE=file`, and `QUEUE_CONNECTION=sync`.
 - If your host uses MySQL rather than SQLite, swap the database environment variables accordingly and run `php artisan migrate --force`.
+- If your host does not provide terminal access, you can temporarily enable the browser deployment helper with `BLOGFUEL_DEPLOYMENT_ENABLED=true` and a strong `BLOGFUEL_DEPLOYMENT_TOKEN`, visit `/__deploy/setup?token=...`, run the setup once, and then disable it again immediately.
 
 ### Go-live checklist
 

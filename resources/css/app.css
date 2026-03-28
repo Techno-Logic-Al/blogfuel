@@ -1299,6 +1299,29 @@ p {
     color: var(--color-text-primary);
 }
 
+.deployment-results {
+    display: grid;
+    gap: 14px;
+}
+
+.deployment-result {
+    padding: 18px;
+}
+
+.deployment-result strong {
+    display: block;
+    margin-bottom: 10px;
+    color: var(--color-text-primary);
+}
+
+.deployment-result pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--color-text-secondary);
+    font: 400 14px/20px var(--font-body);
+}
+
 .toggle-wrap {
     display: grid;
     gap: 8px;
